@@ -1,12 +1,20 @@
 <template>
 	<div>
-		<v-container>
-			<h1>Mais populares</h1>
+		<v-container grid-list-md>
+			<h1>Filmes mais populares</h1>
+			<v-btn
+				color="pink"
+				dark
+				v-on:click="showDrawer"
+				>
+				Meus favoritos
+			</v-btn>
 			<v-layout row wrap>
-				<v-flex xs4 v-for="item in movies" v-bind:key="item.index">
-					<v-card>
+				<v-flex v-for="item in movies" v-bind:key="item.index">
+					<v-card v-on:click="1">
 						<v-img
-							src="https://cdn.vuetifyjs.com/images/cards/house.jpg"
+							v-if="item.backdrop_path"
+							v-bind:src="'https://image.tmdb.org/t/p/w780'+item.backdrop_path"
 							height="200px"
 						>
 							<v-container
@@ -24,57 +32,96 @@
 
 						<v-card-actions>
 							<v-spacer></v-spacer>
-							<v-btn icon>
-								<v-icon>favorite</v-icon>
+							<v-btn icon v-on:click="openDialog(item)">
+								<v-icon>info</v-icon>
 							</v-btn>
-							<v-btn icon>
-								<v-icon>bookmark</v-icon>
+							<v-badge left overlap>
+								<span slot="badge" v-if="item.like">{{ item.like }}</span>
+								<v-btn icon v-on:click="item.like ++">
+									<v-icon>favorite</v-icon>
+								</v-btn>
+							</v-badge>
+							<v-btn icon v-on:click="saveMovie(item)">
+								<v-icon v-if="item.isFavorite" color="amber">bookmark</v-icon>
+								<v-icon v-else>bookmark</v-icon>
 							</v-btn>
 						</v-card-actions>
 					</v-card>
 				</v-flex>
 			</v-layout>
-			<ol>
-				<li v-for="item in movies" v-bind:key="item.index">{{item.title}}</li>
-			</ol>
-			
 		</v-container>
+
+		<navigator ref="navigator"></navigator>
+
+		<details-movie v-bind:dialog="dialog" v-bind:movie="movieForDialog"></details-movie>
+
 	</div>
 </template>
 
 <script>
-import axios from "axios";
+import axios from "axios"
+import DetailsMovie from './DetailsMovie.vue'
+import Navigator from './Navigator.vue'
 const requester = axios.create({
-  	baseURL: "https://api.themoviedb.org/3"
+	baseURL: "https://api.themoviedb.org/3"
 });
 export default {
 	name: "ListMovies",
+	components: {
+		DetailsMovie,
+		Navigator
+	},
 	beforeMount() {
 		requester
 		.get("/movie/popular", {
 			params: {
-			api_key: "958de68fa51fec79b1311cc75a6400b7",
-			language: "pt-BR",
-			page: 1
+				api_key: "958de68fa51fec79b1311cc75a6400b7",
+				language: "pt-BR",
+				page: 1
 			}
 		})
 		.then(response => {
-			this.movies = response.data.results
-		})
-		.catch(error => {
-			console.log(error)
+			let movies = response.data.results
+			movies.forEach(item => {
+				item["like"] = 0
+				item["isFavorite"] = false
+				this.movies.push(item)
+			})
 		})
 	},
 	data() {
 		return {
-			movies: []
+			movies: [],
+			favorites: [],
+			drawer: false,
+			dialog: false,
+			movieForDialog: {}
+		}
+	},
+	methods: {
+		saveMovie(movie) {
+			if(this.favorites.find(item => {
+				return item.id == movie.id
+			})) {
+				return
+			}
+			this.favorites.push(movie)
+			movie.isFavorite = true
+		},
+		openDialog(movie) {
+			this.movieForDialog = movie
+			this.dialog = true
+		},
+		showDrawer() {
+			this.$refs.navigator.show(this.favorites)
 		}
 	}
 };
 </script>
 
 <style scoped>
-ol {
-	text-align: left;
+.title {
+	color: #fff;
+	padding: 4px;
 }
 </style>
