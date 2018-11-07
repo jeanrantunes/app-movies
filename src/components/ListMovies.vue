@@ -1,7 +1,7 @@
 <template>
 	<div>
 		<v-container grid-list-md>
-			<h1>Filmes mais populares</h1>
+			<h1>Filmes populares</h1>
 			<v-btn
 				color="pink"
 				dark
@@ -93,7 +93,6 @@ export default {
 		return {
 			movies: [],
 			favorites: [],
-			drawer: false,
 			dialog: false,
 			movieForDialog: {}
 		}
